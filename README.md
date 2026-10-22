@@ -1,31 +1,60 @@
 # DDS Installer
 
-A Windows GUI installer for DDS - Discord Data Snatcher, a personal local-first Discord archive companion.
+Windows GUI installer for **DDS — Discord Data Snatcher**, a personal local-first Discord archive companion.
 
-## Preview v0.9.0-rc.1
+## Current pre-release
 
-The exact DDS Installer 0.9.0-gui-r4 candidate was accepted following a Windows live test on 21 October 2026. The test confirmed the BetterDiscord reinjection and DDS Plugin startup fix.
+**v0.9.0-rc.1** is based on the accepted **0.9.0-gui-r4** candidate. The targeted Windows live test on 21 October 2026 confirmed the BetterDiscord reinjection and DDS Plugin startup fix.
 
-Use Releases to download DDSSetup.exe and verify its SHA-256 checksum.
+Download binaries from **Releases** and verify them with the published SHA-256 checksums.
 
-## Features
+## What it does
 
-- Russian GUI: Settings, Install, Finish; original DDS icon and mascot.
-- Detect Discord Stable, BetterDiscord, DDS Plugin and DDS Companion.
-- On explicitly started Setup, close Discord and run the official BetterDiscord CLI to reinject BetterDiscord even if files are already found.
-- Validate and enable only DDS Plugin; preserve other plugins and themes.
-- Install Companion while preserving the local archive, SQLite and settings.
-- New program installation defaults to Program Files\DDS, with user data retained under %LOCALAPPDATA%\DDS_Companion.
-- Optional desktop shortcut and post-exit launch of selected applications.
+- Russian three-step GUI wizard: Settings → Install → Finish.
+- Detects Discord Stable, BetterDiscord, DDS Plugin, and DDS Companion.
+- Re-runs the official BetterDiscord CLI during an explicitly started DDS setup even when BetterDiscord files are already detected.
+- Validates and enables only DDS Plugin while preserving other plugins and themes.
+- Installs or preserves DDS Companion without touching the user's archive, SQLite database, or settings.
+- Uses `Program Files\\DDS` for a new program installation and keeps user data under `%LOCALAPPDATA%\\DDS_Companion`.
+- Supports an optional desktop shortcut and post-exit launch of selected applications.
 
-## Limitations
+## Status and limitations
 
-PRE-RELEASE / NOT STABLE. The targeted r4 fix passed Windows live testing. Full standalone Repair DDS, Uninstall, Portable setup, and a separate fresh-install Program Files live gate have not yet been accepted. Existing installed paths are not silently migrated.
+This is a **pre-release**, not Stable.
 
-Installer, DDS Plugin and DDS Companion have independent versions. The accepted GUI release candidate is not claimed to be Authenticode-signed.
+The r4 BetterDiscord / DDS Plugin repair path passed its targeted Windows live test. Full standalone DDS Repair, Uninstall, Portable setup, and a separate fresh-install Program Files live gate are not yet accepted.
+
+Installer, DDS Plugin, and DDS Companion have independent versions. The current release candidate is not claimed to be Authenticode-signed.
 
 ## Build
 
-The repository is populated from the immutable SHA256-verified 0.9.0-gui-r4 source archive. Go 1.23+ and Windows x64. Source ZIP SHA256: 4afa367bc69bb4dcccb45c7484763435a1a23b196df327c74ceee8e40577aad1.
+Requirements:
 
-No redistribution license is implied by publicly viewing this repository. Historical revision reports are retained as source snapshots.
+- Windows x64
+- Go 1.23+
+
+Example build:
+
+```powershell
+go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe .
+```
+
+The repository was populated from the immutable SHA-256-verified 0.9.0-gui-r4 source archive.
+
+Source ZIP SHA-256:
+
+```text
+4afa367bc69bb4dcccb45c7484763435a1a23b196df327c74ceee8e40577aad1
+```
+
+## Repository layout
+
+- `.github/` — CI workflow.
+- `gui_assets/` — GUI assets.
+- `*.go`, `*_test.go` — installer source and tests.
+- `docs/` — project documentation and archived development evidence.
+- `CHANGELOG.md` — concise public changelog.
+
+Historical per-revision reports are preserved under `docs/history/`; they are kept for traceability and are not the primary user documentation.
+
+No redistribution license is implied by publicly viewing this repository.
