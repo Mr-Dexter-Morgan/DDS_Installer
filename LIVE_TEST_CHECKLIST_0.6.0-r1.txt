@@ -1,0 +1,13 @@
+DDS Installer 0.6.0-r1 — Windows isolation gate
+
+[ ] SHA-256 Windows kit ZIP and test EXE match sidecars
+[ ] Run isolated recovery tests only; no real AppData/SQLite edits
+[ ] Interrupted after 0/1/2/3 bootstrap replacements => restored old bytes
+[ ] Second interruption during restore => pending journal retained; resume PASS
+[ ] Root or previous backup tampering => BLOCKED / no writes
+[ ] New Apply while pending => BLOCKED
+[ ] Exact confirmation required; unknown/Portable root => guarded
+[ ] No output suggesting a real installed DDS was updated
+[ ] Windows process exit code 0, tests PASS
+
+STOP on errors after one meaningful corrected retry. Document exact output.
