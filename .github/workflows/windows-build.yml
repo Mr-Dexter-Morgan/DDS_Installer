@@ -23,4 +23,4 @@ jobs:
       - name: Go vet
         run: go vet ./...
       - name: Windows GUI build
-        run: go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe .
+        run: go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe ./cmd/dds-installer
