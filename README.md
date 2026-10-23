@@ -1,213 +1,130 @@
-# DDS Installer
+# DDS Installer — Discord Data Snatcher
 
-[Русский](#русский) · [English](#english)
+**Current public release:** **v0.9.0-rc.1 Preview**  
+Source baseline in that preview: **0.9.0-gui-r4**.
 
----
+DDS Installer is the Windows setup/repair control plane for the DDS project. It detects the required components, acquires verified packages, applies installation/repair steps and preserves DDS user data across application maintenance.
 
-## Русский
+## DDS components
 
-**DDS Installer** — графический установщик и средство обслуживания для **DDS (Discord Data Snatcher)** под Windows.
+| Component | Current public version | Role |
+|---|---|---|
+| **DDS Plugin** | **0.5.4 Stable** | Discord/BetterDiscord capture layer |
+| **DDS Companion** | **0.8.8 Stable** | SQLite archive, Library, media lifecycle/cache, ZIP export, desktop UI |
+| **DDS Installer** | **v0.9.0-rc.1 Preview** | Windows install/repair orchestration |
 
-Он устанавливает и проверяет компоненты, необходимые для работы DDS:
+Repositories:
 
-- Discord Stable;
-- BetterDiscord;
-- DDS Plugin;
-- DDS Companion.
+- Plugin: https://github.com/Mr-Dexter-Morgan/DDS_BD_Plugin
+- Companion: https://github.com/Mr-Dexter-Morgan/DDS_Companion
+- Installer: https://github.com/Mr-Dexter-Morgan/DDS_Installer
 
-### Текущая версия
+The three components use **independent version numbers**.
 
-Последний публичный предварительный выпуск: **v0.9.0-rc.1**, основанный на кандидате **0.9.0-gui-r4**.
+## DDS architecture
 
-Это **pre-release**, а не Stable.
-
-### Что умеет
-
-- Графический мастер установки на русском языке.
-- Обнаружение уже установленных Discord, BetterDiscord, DDS Plugin и DDS Companion.
-- Повторное внедрение BetterDiscord через официальный BetterDiscord CLI, если пользователь запускает установку DDS.
-- Проверка и включение только DDS Plugin без сброса остальных плагинов и тем BetterDiscord.
-- Установка DDS Companion с сохранением пользовательского архива, SQLite и настроек.
-- Новая программная установка Companion по умолчанию в `Program Files\DDS`.
-- Пользовательские данные остаются в `%LOCALAPPDATA%\DDS_Companion`.
-- Опциональный ярлык на рабочем столе.
-- Запуск выбранных приложений только после закрытия мастера установки.
-- Проверка контрольных сумм и состояния устанавливаемых компонентов.
-
-### Что уже проверено
-
-Для `0.9.0-gui-r4` выполнен целевой живой Windows-тест исправления сценария, в котором BetterDiscord и DDS Plugin могли определяться по наличию файлов, но фактически не загружаться.
-
-Публичный pre-release содержит:
-
-- `DDSSetup.exe`;
-- ZIP проверенного Windows-кандидата;
-- неизменный source ZIP;
-- `SHA256SUMS.txt`.
-
-### Ограничения текущего pre-release
-
-Пока не заявлены как полностью принятые:
-
-- общий самостоятельный Repair DDS;
-- Uninstall;
-- Portable setup;
-- отдельный полный live-gate чистой установки Companion в Program Files.
-
-Installer, DDS Plugin и DDS Companion имеют **независимые версии**.
-
-Текущий `DDSSetup.exe` не заявлен как Authenticode-подписанный.
-
-### Установка
-
-1. Открой раздел **Releases**.
-2. Скачай `DDSSetup.exe` из последнего подходящего релиза.
-3. Сверь SHA-256 с `SHA256SUMS.txt`.
-4. Запусти установщик обычным двойным щелчком.
-5. Следуй шагам мастера.
-
-Перед установкой лучше сохранить черновики Discord и выйти из голосового канала: при необходимости Installer автоматически закрывает Discord для корректного внедрения BetterDiscord и DDS Plugin.
-
-### Сборка из исходников
-
-Требования:
-
-- Windows x64;
-- Go 1.23+.
-
-Из корня репозитория:
-
-```powershell
-go test ./...
-go vet ./...
-go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe ./cmd/dds-installer
-```
-
-### Структура репозитория
+Primary data path:
 
 ```text
-.
-├─ cmd/
-│  └─ dds-installer/   # исходный код приложения и тесты
-├─ docs/               # документация и исторические evidence-материалы
-├─ tools/              # служебные генераторы ресурсов
-├─ .github/            # GitHub Actions
-├─ README.md
-├─ CHANGELOG.md
-└─ go.mod
+Discord Desktop → BetterDiscord → DDS Plugin → DDS_Data → DDS Companion → SQLite archive
 ```
 
-Основной код собран в небольшое число файлов по функциональным областям. Исторические отчёты и checkpoint-документы вынесены из корня в `docs/history/`.
+Installer sits beside this path:
 
-### История и доказательства
+```text
+DDS Installer
+  ├─ Discord
+  ├─ BetterDiscord
+  ├─ DDS Plugin
+  └─ DDS Companion
+```
 
-Подробные исторические changelog, validation, release-state, provenance и live-test документы сохранены в `docs/history/`.
+Installer does **not** own the archive. Its job is to place/repair application components without destroying user data.
 
-Они нужны для трассируемости разработки, но не являются основной пользовательской документацией.
+## Current preview capabilities
 
----
-
-## English
-
-**DDS Installer** is a Windows GUI installer and maintenance utility for **DDS (Discord Data Snatcher)**.
-
-It installs and validates the components required by DDS:
-
-- Discord Stable;
-- BetterDiscord;
-- DDS Plugin;
-- DDS Companion.
-
-### Current version
-
-Latest public preview: **v0.9.0-rc.1**, based on the accepted **0.9.0-gui-r4** candidate.
-
-This is a **pre-release**, not a Stable release.
-
-### Features
-
-- Native graphical installation wizard.
-- Detects existing Discord, BetterDiscord, DDS Plugin, and DDS Companion installations.
-- Re-injects BetterDiscord through the official BetterDiscord CLI when DDS setup is explicitly started.
-- Validates and enables only DDS Plugin while preserving unrelated BetterDiscord plugins and themes.
-- Installs DDS Companion while preserving the local archive, SQLite database, and user settings.
+- Native Windows installation wizard.
+- Detects Discord, BetterDiscord, DDS Plugin and DDS Companion.
+- Re-injects BetterDiscord when selected DDS installation requires it.
+- Validates/enables DDS Plugin without resetting unrelated BetterDiscord plugins/themes.
+- Installs Companion program files separately from Companion user data.
 - New Companion program installations default to `Program Files\DDS`.
-- User data remains under `%LOCALAPPDATA%\DDS_Companion`.
 - Optional desktop shortcut.
-- Selected applications are launched only after the installer wizard exits.
-- Integrity and component-state validation during setup.
+- Verified package acquisition and SHA/integrity checks.
+- Selected post-install application launch after the installer exits.
 
-### Verified status
+## User-data boundaries
 
-The targeted Windows live test for `0.9.0-gui-r4` confirmed the fix for the case where BetterDiscord and DDS Plugin could be detected from files while not actually loading at runtime.
+Installer must preserve these by default:
 
-The public pre-release contains:
+DDS Plugin data:
 
-- `DDSSetup.exe`;
-- the verified Windows candidate ZIP;
-- the immutable source ZIP;
-- `SHA256SUMS.txt`.
+```text
+%APPDATA%\BetterDiscord\DDS_Data
+```
 
-### Current pre-release limitations
+DDS Companion data:
 
-The following areas are not yet claimed as fully accepted:
+```text
+%LOCALAPPDATA%\DDS_Companion
+```
+
+That includes the Companion SQLite archive and user settings.
+
+## Preview limitations
+
+The public `v0.9.0-rc.1` release is a **pre-release**, not Stable.
+
+Not yet claimed as fully stable/publicly accepted in this release line:
 
 - standalone full DDS Repair;
 - Uninstall;
 - Portable setup;
-- a separate complete clean-install live gate for Companion under Program Files.
+- complete clean-install acceptance across all supported Windows states.
 
-Installer, DDS Plugin, and DDS Companion use **independent version numbers**.
+The current executable is not claimed to be Authenticode-signed.
 
-The current `DDSSetup.exe` is not claimed to be Authenticode-signed.
+## Installation
 
-### Installation
-
-1. Open **Releases**.
-2. Download `DDSSetup.exe` from the appropriate latest release.
-3. Verify its SHA-256 against `SHA256SUMS.txt`.
-4. Launch the installer normally.
+1. Open the [Installer Releases](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases).
+2. Download `DDSSetup.exe` from the desired release.
+3. Verify SHA-256 against the release checksum file when provided.
+4. Start Installer normally.
 5. Follow the wizard.
 
-Before installation, save Discord drafts and leave any voice call if needed. The Installer may close Discord automatically to perform a clean BetterDiscord / DDS Plugin integration.
+Save Discord drafts and leave voice calls before maintenance; BetterDiscord/plugin integration can require Discord to close.
 
-### Building from source
+## Build from source
 
 Requirements:
 
 - Windows x64;
 - Go 1.23+.
 
-From the repository root:
-
 ```powershell
 go test ./...
 go vet ./...
 go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe ./cmd/dds-installer
 ```
 
-### Repository layout
+GitHub CI performs the same test/vet/native-build gate.
+
+## Repository layout
 
 ```text
-.
-├─ cmd/
-│  └─ dds-installer/   # application source and tests
-├─ docs/               # documentation and historical evidence
-├─ tools/              # resource-generation helpers
-├─ .github/            # GitHub Actions
-├─ README.md
-├─ CHANGELOG.md
-└─ go.mod
+cmd/dds-installer/        application source, tests and embedded GUI resources
+tools/                    reproducible resource generators
+docs/ARCHITECTURE.md      active Installer architecture/boundaries
+docs/releases/            current public release notes
+.github/workflows/        Windows CI
+README.md
+go.mod
 ```
 
-The application source is consolidated into a small number of files grouped by responsibility. Historical validation and checkpoint material lives under `docs/history/` instead of cluttering the repository root.
+The binary resource files under `cmd/dds-installer` are intentional: the GUI background is embedded into the executable and the `.syso` resource supplies Windows icon/manifest data. Their source assets and generators are retained for reproducibility.
 
-### History and evidence
+Current release notes: [docs/releases/RELEASE_NOTES_0.9.0-rc.1.md](docs/releases/RELEASE_NOTES_0.9.0-rc.1.md)
 
-Detailed historical changelogs, validation reports, release-state snapshots, provenance records, and live-test procedures are preserved under `docs/history/`.
+## License
 
-They are retained for traceability and are not the primary user documentation.
-
----
-
-Public visibility of this repository does not by itself grant redistribution rights unless a separate license is added.
+No separate open-source license has been granted. Public repository visibility alone does not grant general redistribution rights.
