@@ -1,10 +1,15 @@
-name: Windows Build Verification
+name: Windows CI
+
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: windows-latest
@@ -13,6 +18,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
       - name: Go tests (canonical temp path)
         shell: pwsh
         run: |
@@ -20,7 +26,9 @@ jobs:
           $env:TEMP = 'C:\DDS_CI_Temp'
           $env:TMP = 'C:\DDS_CI_Temp'
           go test ./...
+
       - name: Go vet
         run: go vet ./...
+
       - name: Windows GUI build
         run: go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe ./cmd/dds-installer
