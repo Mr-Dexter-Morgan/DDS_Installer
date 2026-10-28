@@ -1,7 +1,7 @@
 # DDS Installer — Discord Data Snatcher
 
-**Current public release:** **v0.9.0-rc.1 Preview**  
-Source baseline in that preview: **0.9.0-gui-r4**.
+**Current public release:** **[v0.9.0 Stable](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0)**  
+Release binary: accepted **0.9.0-gui-r7**, Windows Setup LIVE-tested on October 28, 2026.
 
 DDS Installer is the Windows setup/repair control plane for the DDS project. It detects the required components, acquires verified packages, applies installation/repair steps and preserves DDS user data across application maintenance.
 
@@ -11,7 +11,7 @@ DDS Installer is the Windows setup/repair control plane for the DDS project. It 
 |---|---|---|
 | **DDS Plugin** | **0.5.4 Stable** | Discord/BetterDiscord capture layer |
 | **DDS Companion** | **0.8.8 Stable** | SQLite archive, Library, media lifecycle/cache, ZIP export, desktop UI |
-| **DDS Installer** | **v0.9.0-rc.1 Preview** | Windows install/repair orchestration |
+| **DDS Installer** | **v0.9.0 Stable** | Windows install/repair orchestration |
 
 Repositories:
 
@@ -41,7 +41,7 @@ DDS Installer
 
 Installer does **not** own the archive. Its job is to place/repair application components without destroying user data.
 
-## Current preview capabilities
+## v0.9.0 Stable capabilities
 
 - Native Windows installation wizard.
 - Detects Discord, BetterDiscord, DDS Plugin and DDS Companion.
@@ -71,11 +71,11 @@ DDS Companion data:
 
 That includes the Companion SQLite archive and user settings.
 
-## Preview limitations
+## Scope and limitations
 
-The public `v0.9.0-rc.1` release is a **pre-release**, not Stable.
+`v0.9.0` Stable was accepted for the Windows GUI Setup flow, including Discord shutdown/relaunch and shortcut creation. This does **not** imply independent runtime verification of fresh DDS Plugin heartbeat or the complete archive lifecycle.
 
-Not yet claimed as fully stable/publicly accepted in this release line:
+Not yet claimed as fully accepted:
 
 - standalone full DDS Repair;
 - Uninstall;
@@ -123,7 +123,8 @@ go.mod
 
 The binary resource files under `cmd/dds-installer` are intentional: the GUI background is embedded into the executable and the `.syso` resource supplies Windows icon/manifest data. Their source assets and generators are retained for reproducibility.
 
-Current release notes: [docs/releases/RELEASE_NOTES_0.9.0-rc.1.md](docs/releases/RELEASE_NOTES_0.9.0-rc.1.md)
+Current release notes: [docs/releases/RELEASE_NOTES_0.9.0.md](docs/releases/RELEASE_NOTES_0.9.0.md)  
+Historical preview: [v0.9.0-rc.1](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0-rc.1).
 
 ## License
 
