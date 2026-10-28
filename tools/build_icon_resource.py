@@ -1,7 +1,6 @@
 from pathlib import Path
 import struct
-app=Path(__file__).resolve().parents[1] / 'cmd' / 'dds-installer'
-ico=(app / 'gui_assets' / 'DDS.ico').read_bytes()
+ico=(Path(__file__).resolve().parent / 'gui_assets' / 'DDS.ico').read_bytes()
 reserved,kind,count=struct.unpack_from('<HHH',ico,0)
 assert reserved==0 and kind==1 and 1<=count<=30
 icons=[]; group=bytearray(struct.pack('<HHH',0,1,count))
@@ -14,7 +13,7 @@ for j in range(count):
  group+=struct.pack('<BBBBHHIH',width,height,colors,res,planes,bits,size,j+1)
 # Preserve DDS icons and declare asInvoker so Windows installer-name heuristics
 # cannot elevate the per-user GUI. Only the bounded Apply helper uses runas.
-manifest=(app / 'gui_assets' / 'DDSSetup.manifest').read_bytes()
+manifest=(Path(__file__).resolve().parent / 'gui_assets' / 'DDSSetup.manifest').read_bytes()
 entries=[(3,i+1,blob) for i,blob in enumerate(icons)]+[(14,1,bytes(group)),(24,1,manifest)]
 resource_types=(3,14,24)
 data=bytearray()
@@ -63,5 +62,5 @@ reloc=b''.join(struct.pack('<IIH',o,0,0x0003) for o in relocations)
 sym=b'.rsrc\x00\x00\x00'+struct.pack('<IhHBB',0,1,0,3,0)
 output=coff+section+data+reloc+sym+struct.pack('<I',4)
 assert len(output)==symbols_ptr+18+4
-(app / 'rsrc_windows_amd64.syso').write_bytes(output)
+(Path(__file__).resolve().parent / 'rsrc_windows_amd64.syso').write_bytes(output)
 print('Icon count:',count,'resource:',len(output))
