@@ -29,4 +29,4 @@
 e1bad3e6355cad323a01f940c9ab7035aff317204fbaaa537075500af03feb2c  DDS-Installer-v0.9.0-source.zip
 ```
 
-Release publication status: **STAGED / NOT YET PUBLISHED**. Do not confuse a source PR with a GitHub Release.
+Release publication status: **PUBLISHED** as GitHub Release `v0.9.0` on October 28, 2026. The historical `v0.9.0-rc.1` pre-release remains unchanged.
