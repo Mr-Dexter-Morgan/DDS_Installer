@@ -1,6 +1,6 @@
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw
 from pathlib import Path
-root=Path(__file__).resolve().parents[1]/'cmd'/'dds-installer'/'gui_assets'
+root=Path(__file__).resolve().parent/'gui_assets'
 art=Image.open(root/'DDS_mascot.png').convert('RGB')
 w,h=900,390
 bg=Image.new('RGB',(w,h),(5,18,40))

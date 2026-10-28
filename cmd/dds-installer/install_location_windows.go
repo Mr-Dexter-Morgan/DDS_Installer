@@ -19,48 +19,6 @@ import (
 	"unsafe"
 )
 
-// A failed process query must NEVER be treated as 'DDS not running'.
-// Also rejects DDS launched from other locations: conservative by design.
-func checkNoCompanionProcesses() error {
-	script := `$ErrorActionPreference='Stop'; $p=@(Get-CimInstance Win32_Process -Filter "Name='DDS.exe' OR Name='DDSApp.exe' OR Name='DDSUpdater.exe'"); if ($p.Count -gt 0) { Write-Output ('DDS_RUNNING: '+($p.Name -join ',')); exit 8 }; Write-Output 'DDS_CLOSED'`
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return errors.New("Companion запущен или проверка процессов недоступна (отказ в установке): " + strings.TrimSpace(string(out)))
-	}
-	if strings.TrimSpace(string(out)) != "DDS_CLOSED" {
-		return errors.New("неоднозначный результат проверки процессов; установка запрещена")
-	}
-	return nil
-}
-
-func discordClientIsRunning() bool {
-	// Fail closed if the process probe itself fails.
-	cmd := exec.Command("tasklist.exe", "/FI", "IMAGENAME eq Discord.exe", "/FO", "CSV", "/NH")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	b, e := cmd.Output()
-	if e != nil {
-		return true
-	}
-	return strings.Contains(strings.ToLower(string(b)), `"discord.exe"`)
-}
-
-func freeDiskSpace(dir string) (uint64, error) {
-	p, e := syscall.UTF16PtrFromString(filepath.Clean(dir))
-	if e != nil {
-		return 0, e
-	}
-	var available uint64
-	kernel := syscall.NewLazyDLL("kernel32.dll")
-	proc := kernel.NewProc("GetDiskFreeSpaceExW")
-	ok, _, callErr := proc.Call(uintptr(unsafe.Pointer(p)), uintptr(unsafe.Pointer(&available)), 0, 0)
-	if ok == 0 {
-		return 0, fmt.Errorf("GetDiskFreeSpaceExW: %v", callErr)
-	}
-	return available, nil
-}
-
 type knownFolderGUID struct {
 	A    uint32
 	B, C uint16
@@ -115,7 +73,7 @@ func registerWindowsInstall(local, root string, shortcut bool) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	if shortcut {
-		link, err := writeDesktopShortcut(root, desktopDirectory(), true)
+		link, err := writeDesktopShortcut(root, desktopDirectory(), true, previous)
 		if err != nil {
 			return err
 		}
@@ -130,7 +88,7 @@ func registerWindowsInstall(local, root string, shortcut bool) error {
 }
 
 // Explicit desktop injection keeps native .lnk tests away from the real desktop.
-func writeDesktopShortcut(root, desktop string, enabled bool) (string, error) {
+func writeDesktopShortcut(root, desktop string, enabled bool, previous installerOwnership) (string, error) {
 	if !enabled {
 		return "", nil
 	}
@@ -147,7 +105,11 @@ func writeDesktopShortcut(root, desktop string, enabled bool) (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	script := "$shell=New-Object -ComObject WScript.Shell; $path=" + powershellLiteral(link) + "; $target=" + powershellLiteral(filepath.Join(root, "DDS.exe")) + "; $s=$shell.CreateShortcut($path); $present=Test-Path -LiteralPath $path; if($present -and $s.TargetPath -ne $target){throw 'DDS.lnk points to another installation'}; if($present -and $s.IconLocation -eq ($target+',0') -and $s.WorkingDirectory -eq " + powershellLiteral(root) + "){exit 0}; $s.TargetPath=$target; $s.WorkingDirectory=" + powershellLiteral(root) + "; $s.IconLocation=$target+',0'; $s.Description='DDS - Discord Data Snatcher'; $s.Save(); if(-not(Test-Path -LiteralPath $path)){throw 'Shortcut not created'}"
+	previousTarget := ""
+	if previous.Schema == "dds-installer-ownership-v1" && previous.Root != "" && previous.Shortcut != "" && strings.EqualFold(filepath.Clean(previous.Shortcut), filepath.Clean(link)) {
+		previousTarget = filepath.Join(previous.Root, "DDS.exe")
+	}
+	script := "$shell=New-Object -ComObject WScript.Shell; $path=" + powershellLiteral(link) + "; $target=" + powershellLiteral(filepath.Join(root, "DDS.exe")) + "; $previousTarget=" + powershellLiteral(previousTarget) + "; $s=$shell.CreateShortcut($path); $present=Test-Path -LiteralPath $path; if($present -and $s.TargetPath -ne $target -and ([string]::IsNullOrEmpty($previousTarget) -or $s.TargetPath -ne $previousTarget)){throw 'DDS.lnk points to another installation'}; if($present -and $s.IconLocation -eq ($target+',0') -and $s.WorkingDirectory -eq " + powershellLiteral(root) + "){exit 0}; $s.TargetPath=$target; $s.WorkingDirectory=" + powershellLiteral(root) + "; $s.IconLocation=$target+',0'; $s.Description='DDS - Discord Data Snatcher'; $s.Save(); if(-not(Test-Path -LiteralPath $path)){throw 'Shortcut not created'}"
 	if out, err := hiddenPowerShell(ctx, script); err != nil {
 		return "", fmt.Errorf("ярлык DDS: %w (%s)", err, strings.TrimSpace(string(out)))
 	}
@@ -344,102 +306,4 @@ func startCompanionAt(root string) error {
 		return err
 	}
 	return spawnVerifiedClient(filepath.Join(root, "DDS.exe"))
-}
-
-func enableUTF8Console() {
-	k32 := syscall.NewLazyDLL("kernel32.dll")
-	setOut := k32.NewProc("SetConsoleOutputCP")
-	setIn := k32.NewProc("SetConsoleCP")
-	setOut.Call(uintptr(65001))
-	setIn.Call(uintptr(65001))
-}
-
-func runningDDSProcesses() []CompanionProcess {
-	script := `[Console]::OutputEncoding=[Text.UTF8Encoding]::UTF8; Get-CimInstance Win32_Process -Filter "Name='DDS.exe' OR Name='DDSApp.exe'" | Select-Object ExecutablePath,CommandLine | ConvertTo-Json -Compress`
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	out, err := cmd.Output()
-	if err != nil || len(strings.TrimSpace(string(out))) == 0 {
-		return nil
-	}
-	raw := strings.TrimSpace(string(out))
-	var many []CompanionProcess
-	if strings.HasPrefix(raw, "[") {
-		_ = json.Unmarshal(out, &many)
-		return many
-	}
-	var one CompanionProcess
-	if json.Unmarshal(out, &one) == nil && one.ExecutablePath != "" {
-		return []CompanionProcess{one}
-	}
-	return nil
-}
-
-func stopDiscordForSetup(ctx context.Context) error {
-	// One bounded graceful shutdown, then a bounded forced fallback. The
-	// Setup consent text explicitly warns that Discord will be closed.
-	script := `$ErrorActionPreference='Stop'; $p=@(Get-Process -Name Discord -ErrorAction SilentlyContinue); foreach($x in $p){if($x.MainWindowHandle -ne 0){[void]$x.CloseMainWindow()}}; Start-Sleep -Seconds 5; if(Get-Process -Name Discord -ErrorAction SilentlyContinue){$null=& taskkill.exe /F /T /IM Discord.exe 2>&1}; if(Get-Process -Name Discord -ErrorAction SilentlyContinue){exit 8}`
-	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return errors.New("Discord остался запущен: " + strings.TrimSpace(string(out)))
-	}
-	return nil
-}
-func spawnVerifiedClient(exe string, args ...string) error {
-	if err := requireNormalFile(exe); err != nil {
-		return err
-	}
-	cmd := exec.Command(exe, args...)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	return cmd.Process.Release()
-}
-func startInstalledDiscord(localAppData, appData, installerDir string) error {
-	c := detectDiscord(DetectContext{LocalAppData: localAppData, AppData: appData, InstallerDir: installerDir})
-	if c.State != StateOK || !strings.EqualFold(filepath.Base(c.Path), "Discord.exe") {
-		return errors.New("Discord Stable не обнаружен")
-	}
-	return spawnVerifiedClient(c.Path)
-}
-func startInstalledCompanion(localAppData string) error {
-	root := filepath.Join(localAppData, "DDS")
-	if err := requireNormalDir(root); err != nil {
-		return err
-	}
-	ptr, err := readCurrent(root)
-	if err != nil {
-		return err
-	}
-	if ptr.Schema != "dds-version-pointer-v1" || ptr.RelativePath != "versions/"+ptr.Version {
-		return errors.New("неверный current.json DDS")
-	}
-	if err := requireNormalFile(filepath.Join(root, filepath.FromSlash(ptr.RelativePath), "DDSApp.exe")); err != nil {
-		return err
-	}
-	return spawnVerifiedClient(filepath.Join(root, "DDS.exe"))
-}
-func companionClientIsRunning() bool { return len(runningDDSProcesses()) > 0 }
-
-func atomicReplaceFile(src, dst string) error {
-	from, _ := syscall.UTF16PtrFromString(src)
-	to, _ := syscall.UTF16PtrFromString(dst)
-	// MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH
-	r, _, e := syscall.NewLazyDLL("kernel32.dll").NewProc("MoveFileExW").Call(uintptr(unsafe.Pointer(from)), uintptr(unsafe.Pointer(to)), 0x1|0x8)
-	if r == 0 {
-		return fmt.Errorf("MoveFileExW: %w", e)
-	}
-	return nil
-}
-
-// Confirm a payload belonging to the selected installation, not any DDS process.
-func companionAtRunning(root string) bool {
-	for _, p := range runningDDSProcesses() {
-		if candidate := rootFromCompanionProcess(p); candidate != "" && strings.EqualFold(filepath.Clean(candidate), filepath.Clean(root)) {
-			return true
-		}
-	}
-	return false
 }
