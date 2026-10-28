@@ -90,6 +90,6 @@ Current public state:
 
 - Plugin: 0.5.4 Stable;
 - Companion: 0.8.8 Stable;
-- Installer: v0.9.0-rc.1 Preview.
+- Installer: v0.9.0 Stable (accepted GUI r7).
 
-A preview build is not promoted merely because it compiles. Test/vet/native build plus relevant live Windows validation are required before stable promotion.
+Stable promotion requires more than a successful compile: test/vet/native build plus relevant live Windows validation are required. DDS Installer v0.9.0 was promoted after GUI r7 LIVE acceptance on October 28, 2026.
