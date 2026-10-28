@@ -26,7 +26,7 @@ Build: `0.9.0-gui-r7` — the exact Windows x64 executable accepted by the user 
 
 ```
 839f68aafc94beface43adcc20f722d7f76c76e457d7643d1b9b7d23f7fb53a8  DDSSetup.exe
-8d228110131bdf6eb78e15c991dcaccb49603a48812e9c1deaa497d87b1e915b  DDS-Installer-0.9.0-windows-x64-gui-r7.zip
+8d228110131bdf6eb78e15c991dcaccb49603a48812e9c1deaa497d87b1e915b  DDS-Installer-0.9.0-windows-x64-candidate-gui-r7.zip
 71f8af920d972339af516eb8560b595ec38a808129bb7fb23bc7c50a927ac74d  DDS-Installer-0.9.0-gui-r7-source.zip
 ```
 
