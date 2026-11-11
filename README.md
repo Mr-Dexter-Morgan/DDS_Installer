@@ -126,6 +126,33 @@ The binary resource files under `cmd/dds-installer` are intentional: the GUI bac
 Current release notes: [docs/releases/RELEASE_NOTES_0.9.0.md](docs/releases/RELEASE_NOTES_0.9.0.md)  
 Historical preview: [v0.9.0-rc.1](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0-rc.1).
 
+## Contributors
+
+<table>
+  <tr>
+    <td align="center" width="220">
+      <a href="https://github.com/Mr-Dexter-Morgan">
+        <img src="https://avatars.githubusercontent.com/u/306070326?v=4" width="96" height="96" alt="Mr-Dexter-Morgan" />
+        <br />
+        <strong>Mr-Dexter-Morgan</strong>
+      </a>
+      <br />
+      <sub>Creator &amp; maintainer</sub>
+    </td>
+    <td align="center" width="220">
+      <a href="https://chatgpt.com/">
+        <img src="https://github.com/openai.png?size=96" width="96" height="96" alt="ChatGPT" />
+        <br />
+        <strong>ChatGPT</strong>
+      </a>
+      <br />
+      <sub>AI development collaborator</sub>
+    </td>
+  </tr>
+</table>
+
+<sub>ChatGPT is credited for AI-assisted development; this does not imply official involvement or endorsement by OpenAI.</sub>
+
 ## License
 
 No separate open-source license has been granted. Public repository visibility alone does not grant general redistribution rights.
