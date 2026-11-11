@@ -1,105 +1,96 @@
-# DDS Installer — Discord Data Snatcher
+# DDS Installer — установка и восстановление системы DDS
 
-**Current public release:** **[v0.9.0 Stable](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0)**  
-Release binary: accepted **0.9.0-gui-r7**, Windows Setup LIVE-tested on October 28, 2026.
+**Актуальный стабильный выпуск: [0.9.0](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0).** Установочный файл: `DDSSetup.exe`. Сборка `0.9.0-gui-r7` прошла проверку сценария установки через графический мастер в Windows 28 октября 2026 года.
 
-DDS Installer is the Windows setup/repair control plane for the DDS project. It detects the required components, acquires verified packages, applies installation/repair steps and preserves DDS user data across application maintenance.
+**DDS Installer** — установщик проекта Discord Data Snatcher. Он проверяет, какие части DDS уже присутствуют на компьютере, помогает установить недостающие или восстановить компоненты, проверяет целостность загружаемых пакетов и старается сохранить пользовательские данные при обслуживании системы.
 
-## DDS components
+Сам Installer **не собирает сообщения и не ведёт архив Discord**. Этим занимаются DDS Plugin и DDS Companion.
 
-| Component | Current public version | Role |
+## Из чего состоит DDS
+
+| Компонент | Актуальная опубликованная версия | Для чего нужен |
 |---|---|---|
-| **DDS Plugin** | **0.5.4 Stable** | Discord/BetterDiscord capture layer |
-| **DDS Companion** | **0.8.8 Stable** | SQLite archive, Library, media lifecycle/cache, ZIP export, desktop UI |
-| **DDS Installer** | **v0.9.0 Stable** | Windows install/repair orchestration |
+| [DDS Plugin](https://github.com/Mr-Dexter-Morgan/DDS_BD_Plugin) | 0.5.4, стабильная | Считывает доступные данные из работающего Discord через BetterDiscord и сохраняет их локально |
+| [DDS Companion](https://github.com/Mr-Dexter-Morgan/DDS_Companion) | 0.8.8, стабильная | Ведёт архив SQLite, управляет медиафайлами и предоставляет настольный интерфейс |
+| [DDS Installer](https://github.com/Mr-Dexter-Morgan/DDS_Installer) | 0.9.0, стабильная | Устанавливает компоненты и помогает восстановить их работоспособность |
 
-Repositories:
+**Версии у трёх компонентов независимые:** номер плагина не обязан совпадать с номером Companion или Installer.
 
-- Plugin: https://github.com/Mr-Dexter-Morgan/DDS_BD_Plugin
-- Companion: https://github.com/Mr-Dexter-Morgan/DDS_Companion
-- Installer: https://github.com/Mr-Dexter-Morgan/DDS_Installer
-
-The three components use **independent version numbers**.
-
-## DDS architecture
-
-Primary data path:
-
-```text
-Discord Desktop → BetterDiscord → DDS Plugin → DDS_Data → DDS Companion → SQLite archive
-```
-
-Installer sits beside this path:
+## Что именно устанавливает Installer
 
 ```text
 DDS Installer
-  ├─ Discord
-  ├─ BetterDiscord
-  ├─ DDS Plugin
-  └─ DDS Companion
+   ├─ Настольный Discord
+   ├─ BetterDiscord
+   ├─ DDS Plugin
+   └─ DDS Companion
 ```
 
-Installer does **not** own the archive. Its job is to place/repair application components without destroying user data.
+После установки данные проходят другим путём:
 
-## v0.9.0 Stable capabilities
+```text
+Discord → BetterDiscord → DDS Plugin → локальные данные → DDS Companion → SQLite
+```
 
-- Native Windows installation wizard.
-- Detects Discord, BetterDiscord, DDS Plugin and DDS Companion.
-- Re-injects BetterDiscord when selected DDS installation requires it.
-- Validates/enables DDS Plugin without resetting unrelated BetterDiscord plugins/themes.
-- Installs Companion program files separately from Companion user data.
-- New Companion program installations default to `Program Files\DDS`.
-- Optional desktop shortcut.
-- Verified package acquisition and SHA/integrity checks.
-- Selected post-install application launch after the installer exits.
+Это важно: **установщик отвечает за программы, а Companion — за пользовательский архив**. При переустановке или восстановлении программы нельзя без причины удалять сохранённую историю.
 
-## User-data boundaries
+## Что умеет версия 0.9.0
 
-Installer must preserve these by default:
+- Проводит пользователя через установку в обычном графическом окне Windows.
+- Определяет наличие Discord, BetterDiscord, DDS Plugin и DDS Companion.
+- При необходимости повторно подключает BetterDiscord к Discord.
+- Проверяет и включает DDS Plugin, не сбрасывая посторонние плагины и темы BetterDiscord.
+- Разделяет файлы Companion и его пользовательские данные.
+- По умолчанию использует `Program Files\DDS` для новой установки файлов Companion.
+- По выбору создаёт ярлык на рабочем столе.
+- Загружает пакеты с проверкой целостности и контрольных сумм.
+- Может запустить выбранное приложение после завершения работы установщика.
 
-DDS Plugin data:
+## Какие данные должны сохраняться
+
+**Данные плагина:**
 
 ```text
 %APPDATA%\BetterDiscord\DDS_Data
 ```
 
-DDS Companion data:
+**Архив и настройки Companion:**
 
 ```text
 %LOCALAPPDATA%\DDS_Companion
 ```
 
-That includes the Companion SQLite archive and user settings.
+Вторая папка содержит в том числе базу SQLite. Сценарии установки и обслуживания должны сохранять её по умолчанию.
 
-## Scope and limitations
+## Что проверено, а что пока нет
 
-`v0.9.0` Stable was accepted for the Windows GUI Setup flow, including Discord shutdown/relaunch and shortcut creation. This does **not** imply independent runtime verification of fresh DDS Plugin heartbeat or the complete archive lifecycle.
+Стабильная версия **0.9.0** принята для основного сценария установки через графический мастер Windows, включая закрытие и повторный запуск Discord и создание ярлыка.
 
-Not yet claimed as fully accepted:
+При этом **не заявлена отдельная полная проверка** следующих сценариев:
 
-- standalone full DDS Repair;
-- Uninstall;
-- Portable setup;
-- complete clean-install acceptance across all supported Windows states.
+- самостоятельное полное восстановление DDS;
+- удаление программы;
+- переносимая установка;
+- установка с нуля для всех возможных состояний Windows;
+- полный цикл записи и последующего чтения архива и получение свежего сигнала активности плагина.
 
-The current executable is not claimed to be Authenticode-signed.
+Наличие успешной установки не следует автоматически считать подтверждением работы всех функций архива.
 
-## Installation
+Установочный EXE не заявлен как подписанный сертификатом Authenticode.
 
-1. Open the [Installer Releases](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases).
-2. Download `DDSSetup.exe` from the desired release.
-3. Verify SHA-256 against the release checksum file when provided.
-4. Start Installer normally.
-5. Follow the wizard.
+## Как установить DDS
 
-Save Discord drafts and leave voice calls before maintenance; BetterDiscord/plugin integration can require Discord to close.
+1. Открой [страницу выпусков DDS Installer](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases).
+2. Скачай `DDSSetup.exe` из нужного выпуска.
+3. Если к релизу приложены контрольные суммы, сверь SHA-256 скачанного файла.
+4. Запусти установщик в Windows.
+5. Следуй указаниям мастера и выбери нужные действия.
 
-## Build from source
+**Перед установкой или восстановлением** сохрани незавершённые сообщения и выйди из голосовых каналов: для работы с BetterDiscord может потребоваться закрыть Discord.
 
-Requirements:
+## Сборка из исходников
 
-- Windows x64;
-- Go 1.23+.
+Требуются Windows x64 и Go 1.23 или новее.
 
 ```powershell
 go test ./...
@@ -107,52 +98,29 @@ go vet ./...
 go build -trimpath -ldflags="-H windowsgui -s -w" -o DDSSetup.exe ./cmd/dds-installer
 ```
 
-GitHub CI performs the same test/vet/native-build gate.
+Проверки GitHub повторяют этапы тестирования, статической проверки и сборки Windows.
 
-## Repository layout
+## Структура проекта
 
 ```text
-cmd/dds-installer/        application source, tests and embedded GUI resources
-tools/                    reproducible resource generators
-docs/ARCHITECTURE.md      active Installer architecture/boundaries
-docs/releases/            current public release notes
-.github/workflows/        Windows CI
-README.md
-go.mod
+cmd/dds-installer/       код установщика, тесты и ресурсы интерфейса
+tools/                   утилиты для воспроизводимого создания ресурсов
+docs/ARCHITECTURE.md     техническая архитектура и границы ответственности
+docs/releases/           описания выпусков
+.github/workflows/       автоматические проверки GitHub
+go.mod                   настройки Go-модуля
+LICENSE.md               условия использования исходного кода
 ```
 
-The binary resource files under `cmd/dds-installer` are intentional: the GUI background is embedded into the executable and the `.syso` resource supplies Windows icon/manifest data. Their source assets and generators are retained for reproducibility.
+Встроенные двоичные ресурсы интерфейса оставлены намеренно: фон окна включается в EXE, а файл `.syso` содержит значок и сведения для Windows. Исходные материалы и утилиты для их создания сохранены в репозитории.
 
-Current release notes: [docs/releases/RELEASE_NOTES_0.9.0.md](docs/releases/RELEASE_NOTES_0.9.0.md)  
-Historical preview: [v0.9.0-rc.1](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0-rc.1).
+Документы: [архитектура](docs/ARCHITECTURE.md), [изменения версии 0.9.0](docs/releases/RELEASE_NOTES_0.9.0.md), [ранняя версия 0.9.0-rc.1](https://github.com/Mr-Dexter-Morgan/DDS_Installer/releases/tag/v0.9.0-rc.1).
 
-## Contributors
+## Лицензия
 
-<table>
-  <tr>
-    <td align="center" width="220">
-      <a href="https://github.com/Mr-Dexter-Morgan">
-        <img src="https://avatars.githubusercontent.com/u/306070326?v=4" width="96" height="96" alt="Mr-Dexter-Morgan" />
-        <br />
-        <strong>Mr-Dexter-Morgan</strong>
-      </a>
-      <br />
-      <sub>Creator &amp; maintainer</sub>
-    </td>
-    <td align="center" width="220">
-      <a href="https://chatgpt.com/">
-        <img src="https://github.com/openai.png?size=96" width="96" height="96" alt="ChatGPT" />
-        <br />
-        <strong>ChatGPT</strong>
-      </a>
-      <br />
-      <sub>AI development collaborator</sub>
-    </td>
-  </tr>
-</table>
+Исходный код проекта предоставляется на условиях [PolyForm Noncommercial 1.0.0](LICENSE.md). **Для некоммерческих целей** разрешено пользоваться программой, изучать и изменять исходники, создавать собственные версии и делиться ими, соблюдая требования лицензии об уведомлениях.
 
-<sub>ChatGPT is credited for AI-assisted development; this does not imply official involvement or endorsement by OpenAI.</sub>
+**Коммерческое использование** (не только продажа копий, но и применение в коммерческом продукте или услуге) не разрешено без отдельного согласия правообладателя. Это лицензия с доступным исходным кодом, **но не лицензия открытого ПО в смысле OSI**, поскольку она ограничивает коммерческое применение.
 
-## License
+У сторонних компонентов и зависимостей могут быть собственные условия лицензирования. Подробные юридические условия приведены в [LICENSE.md](LICENSE.md); это описание служит только пояснением.
 
-No separate open-source license has been granted. Public repository visibility alone does not grant general redistribution rights.
